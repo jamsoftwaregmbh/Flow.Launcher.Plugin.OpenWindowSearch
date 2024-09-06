@@ -1,12 +1,18 @@
 name: Build and Release
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
+    paths-ignore: 
+      - .github/workflows/*
   pull_request:
     branches: [ main ]
+    paths-ignore: 
+      - .github/workflows/*
   release:
     types: [created]
+  
 
 jobs:
   build:
@@ -45,14 +51,17 @@ jobs:
     - name: Zip Release
       if: github.event_name == 'release'
       run: Compress-Archive -Path ./publish/* -DestinationPath ./Flow.Launcher.Plugin.OpenWindowSearch.zip
-
-    - name: Upload Release Asset
-      if: github.event_name == 'release'
-      uses: actions/upload-release-asset@v1
+    - name: get version
+      id: version
+      uses: notiz-dev/github-action-json-property@release
+      with: 
+        path: 'plugin.json'
+        prop_path: 'Version'
+    - name: Publish
+      if: github.event_name == 'release' && success()
+      uses: softprops/action-gh-release@v1
+      with:
+        files: 'Flow.Launcher.Plugin.OpenWindowSearch.zip'
+        tag_name: "v${{steps.version.outputs.prop}}"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./Flow.Launcher.Plugin.OpenWindowSearch.zip
-        asset_name: Flow.Launcher.Plugin.OpenWindowSearch.zip
-        asset_content_type: application/zip
