@@ -13,25 +13,33 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 7.0.x
 
+    - name: Cache NuGet packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore Flow.Launcher.Plugin.OpenWindowSearch.csproj
 
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build --configuration Release --no-restore Flow.Launcher.Plugin.OpenWindowSearch.csproj
 
     - name: Test
-      run: dotnet test --no-restore --verbosity normal
+      run: dotnet test --no-restore --verbosity normal Flow.Launcher.Plugin.OpenWindowSearch.csproj
 
     - name: Publish
       if: github.event_name == 'release'
-      run: dotnet publish --configuration Release --output ./publish
+      run: dotnet publish --configuration Release --output ./publish Flow.Launcher.Plugin.OpenWindowSearch.csproj
 
     - name: Zip Release
       if: github.event_name == 'release'
